@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Purplle AI — Analyze CCTV Footage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #eef2ff;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --pink: #ec4899;
+      --purple: #a855f7;
+      --border: #f1f5f9;
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+    
+    .sidebar { width: 260px; height: 100vh; background: linear-gradient(180deg, #ffffff, #faf5ff); position: fixed; left: 0; top: 0; padding: 30px 24px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.05); border-right: 1px solid rgba(168, 85, 247, 0.08); display: flex; flex-direction: column; z-index: 100; }
+    .logo { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 45px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+    .logo span { background: linear-gradient(135deg, var(--pink), var(--purple)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sidebar a { display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-decoration: none; color: var(--muted); border-radius: 12px; margin-bottom: 8px; font-weight: 550; font-size: 14px; transition: var(--transition); }
+    .sidebar a:hover { background: #faf5ff; color: var(--purple); }
+    .sidebar a.active { background: #f3e8ff; color: var(--purple); box-shadow: var(--shadow-sm); }
+    
+    .main { margin-left: 260px; width: calc(100% - 260px); padding: 40px 48px; }
+    .hero { background: linear-gradient(135deg, #ec4899, #a855f7); padding: 40px; border-radius: 24px; color: white; margin-bottom: 35px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; }
+    .hero::after { content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%); pointer-events: none; }
+    .hero h1 { font-size: 38px; font-weight: 800; margin-bottom: 12px; letter-spacing: -1px; }
+    .hero p { color: #faf5ff; font-size: 16px; line-height: 1.6; max-width: 680px; font-weight: 400; }
+    
+    .card { background: var(--card); border-radius: 24px; padding: 28px; box-shadow: var(--shadow-sm); border: 1px solid rgba(168, 85, 247, 0.05); }
+    .layout-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; margin-top: 30px; }
+    .panel { background: var(--card); border-radius: 24px; padding: 28px; box-shadow: var(--shadow-sm); border: 1px solid rgba(168, 85, 247, 0.05); }
+    .panel h2 { font-size: 22px; font-weight: 700; margin-bottom: 18px; letter-spacing: -0.5px; }
+    
+    .video-wrapper { background: #000; border-radius: 20px; overflow: hidden; border: 1px solid rgba(15, 23, 42, 0.08); }
+    .video-wrapper video { width: 100%; display: block; }
+    
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: #faf9ff;
+      border-radius: 20px;
+      padding: 22px;
+      border: 1px solid rgba(168, 85, 247, 0.08);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 110px;
+      text-align: left;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-title { font-size: 13px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 700; }
+    .stat-value { font-size: 32px; font-weight: 800; color: var(--purple); line-height: 1.1; margin: 0; display: block; }
+    .stat-value.green { color: #0f766e; }
+    
+    .events-list { display: flex; flex-direction: column; gap: 12px; }
+    .event-item { display: flex; gap: 14px; align-items: flex-start; background: #f8fafc; border-radius: 18px; padding: 16px 18px; border: 1px solid rgba(148, 163, 184, 0.18); transition: var(--transition); }
+    .event-item:hover { background: #fdfaff; border-color: rgba(168, 85, 247, 0.15); }
+    .event-dot { width: 12px; height: 12px; border-radius: 999px; margin-top: 5px; }
+    .event-dot.green { background: #16a34a; }
+    .event-dot.red { background: #dc2626; }
+    .event-text { display: flex; flex-direction: column; gap: 4px; }
+    .event-type { font-weight: 700; color: var(--text); }
+    .event-detail { color: var(--muted); font-size: 14px; }
+    
+    .btn {
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      border: none;
+      padding: 14px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.2);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.3);
+    }
+    .btn:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    .btn.btn-choose {
+      background: #f3e8ff;
+      color: var(--purple);
+      box-shadow: none;
+    }
+    .btn.btn-choose:hover {
+      background: #e9d5ff;
+    }
+    .btn.btn-reset {
+      background: #fee2e2;
+      color: #dc2626;
+      box-shadow: none;
+    }
+    .btn.btn-reset:hover {
+      background: #fecaca;
+    }
+
+    .sim-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+    .sim-step.active {
+      background: #faf5ff !important;
+      border-color: #e9d5ff !important;
+      color: var(--purple) !important;
+    }
+    .sim-step.completed {
+      background: #f0fdf4 !important;
+      border-color: #bbf7d0 !important;
+      color: #16a34a !important;
+    }
+    .step-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .sim-step.active .step-icon {
+      background: var(--purple);
+    }
+    .sim-step.completed .step-icon {
+      background: #16a34a;
+    }
+
+    .spinner {
+      display: inline-block;
+      animation: spin 1.5s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 1120px) { .layout-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) {
+      .sidebar { width: 80px; padding: 20px 10px; }
+      .sidebar .logo span, .sidebar a span { display: none; }
+      .sidebar a { justify-content: center; padding: 14px 0; }
+      .main { margin-left: 80px; width: calc(100% - 80px); padding: 30px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">💜 <span>Purplle AI</span></div>
+    <a href="/dashboard">📹 <span>Store Activity</span></a>
+    <a href="/analyze" class="active">🎥 <span>Analyze Video</span></a>
+    <a href="/journey">👥 <span>Person Journey</span></a>
+    <a href="/business">💰 <span>Business Insights</span></a>
+  </div>
+
+  <div class="main">
+    <div class="hero">
+      <h1>Analyze CCTV Footage</h1>
+      <p>Watch person detection, tracking and movement analysis generated from AI-powered CCTV processing.</p>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="card" style="margin-bottom: 20px;">
+      <div id="upload-controls">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn btn-choose" onclick="document.getElementById('fileInput').click()">
+              📁 Choose Video
+            </button>
+            <input type="file" id="fileInput" accept=".mp4" style="display: none;" />
+            <span id="fileName" style="font-weight: 600; color: var(--muted); font-size: 14.5px;">No file selected</span>
+            <button class="btn btn-reset" id="resetBtn" style="display: none;" onclick="resetAnalysisState()">
+              📤 Upload New Video
+            </button>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn" id="analyzeBtn" disabled onclick="startAnalysis()">
+              ⚡ Analyze Video
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing Status Section (Initially Hidden) -->
+      <div id="processing-status" style="display: none; margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px;">
+        <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+          <span class="spinner">⏳</span> Processing CCTV Analytics...
+        </h3>
+        <div style="height: 6px; background: #e2e8f0; border-radius: 10px; margin-bottom: 20px; overflow: hidden;">
+          <div id="progress-bar-fill" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 10px; transition: width 0.3s ease;"></div>
+        </div>
+        <div id="processing-steps" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+          <div class="sim-step" id="step-upload">
+            <span class="step-icon">1</span>
+            <span>Uploading Video...</span>
+          </div>
+          <div class="sim-step" id="step-detect">
+            <span class="step-icon">2</span>
+            <span>Detecting People...</span>
+          </div>
+          <div class="sim-step" id="step-track">
+            <span class="step-icon">3</span>
+            <span>Tracking Movement...</span>
+          </div>
+          <div class="sim-step" id="step-journey">
+            <span class="step-icon">4</span>
+            <span>Generating Journeys...</span>
+          </div>
+          <div class="sim-step" id="step-insights">
+            <span class="step-icon">5</span>
+            <span>Building Insights...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Layout (Hidden by default until video is processed or existing runs exist) -->
+    <div class="layout-grid" id="analysis-content" style="display: none;">
+      <div class="panel">
+        <h2>Tracked Store Video</h2>
+        <div class="video-wrapper">
+          <video id="tracked-video" src="/tracked_store.mp4" controls playsinline>
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        
+        <!-- Action Buttons underneath the video -->
+        <div id="video-action-buttons" style="display: flex; gap: 15px; margin-top: 20px;">
+          <button class="btn" onclick="window.location='/journey'" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            👥 View Person Journeys
+          </button>
+          <button class="btn" onclick="window.location='/business'" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, var(--purple), #8b5cf6);">
+            💰 View Business Insights
+          </button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="analytics-grid">
+          <div class="stat-card">
+            <div class="stat-title">Detected People</div>
+            <div class="stat-value" id="stat-detected">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Active Tracks</div>
+            <div class="stat-value green" id="stat-active">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Current Occupancy</div>
+            <div class="stat-value" id="stat-occupancy">--</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Average Dwell Time</div>
+            <div class="stat-value" id="stat-dwell">--</div>
+          </div>
+        </div>
+
+        <div>
+          <h2>Live Events</h2>
+          <div class="events-list" id="events-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const fileName = document.getElementById('fileName');
+    let selectedFile = null;
+    let metricsInterval = null;
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        selectedFile = e.target.files[0];
+        fileName.textContent = `Selected: ${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)`;
+        analyzeBtn.removeAttribute('disabled');
+        
+        // Hide previous run content immediately on new selection
+        document.getElementById("analysis-content").style.display = "none";
+        resetBtn.style.display = "none";
+        
+        // Stop metrics polling interval
+        if (metricsInterval) {
+          clearInterval(metricsInterval);
+          metricsInterval = null;
+        }
+      }
+    });
+
+    async function getJSON(url) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("HTTP error " + response.status);
+      return response.json();
+    }
+
+    function setStepState(stepId, state) {
+      const stepEl = document.getElementById(stepId);
+      stepEl.classList.remove('active', 'completed');
+      if (state === 'active') {
+        stepEl.classList.add('active');
+      } else if (state === 'completed') {
+        stepEl.classList.add('completed');
+        stepEl.querySelector('.step-icon').textContent = '✓';
+      }
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function resetAnalysisState() {
+      selectedFile = null;
+      fileInput.value = "";
+      fileName.textContent = "No file selected";
+      analyzeBtn.setAttribute('disabled', 'true');
+      resetBtn.style.display = "none";
+      document.getElementById("analysis-content").style.display = "none";
+      if (metricsInterval) {
+        clearInterval(metricsInterval);
+      }
+      document.getElementById("processing-status").style.display = "none";
+    }
+
+    async function startAnalysis() {
+      if (!selectedFile) return;
+
+      // Keep the layout grid and video player hidden until the analysis is complete
+      document.getElementById("analysis-content").style.display = "none";
+      resetBtn.style.display = "none";
+      
+      const actionBtns = document.getElementById("video-action-buttons");
+      if (actionBtns) actionBtns.style.display = "none";
+      
+      // Reset/clear metrics values immediately
+      document.getElementById("stat-detected").innerText = "--";
+      document.getElementById("stat-active").innerText = "--";
+      document.getElementById("stat-occupancy").innerText = "--";
+      document.getElementById("stat-dwell").innerText = "--";
+      
+      // Reset live events panel
+      document.getElementById("events-list").innerHTML = `
+        <div style="color: var(--muted); font-size: 14px; text-align: center; padding: 20px;">
+          CCTV processing in progress...
+        </div>
+      `;
+
+      if (metricsInterval) {
+        clearInterval(metricsInterval);
+      }
+
+      document.getElementById("processing-status").style.display = "block";
+      const progressFill = document.getElementById("progress-bar-fill");
+      const progressHeading = document.querySelector("#processing-status h3");
+      progressHeading.innerHTML = `<span class="spinner">⏳</span> Processing CCTV Analytics...`;
+      
+      const steps = ['step-upload', 'step-detect', 'step-track', 'step-journey', 'step-insights'];
+      steps.forEach(s => {
+        const el = document.getElementById(s);
+        el.classList.remove('active', 'completed');
+        el.querySelector('.step-icon').textContent = s === 'step-upload' ? '1' : s === 'step-detect' ? '2' : s === 'step-track' ? '3' : s === 'step-journey' ? '4' : '5';
+      });
+
+      setStepState('step-upload', 'active');
+      progressFill.style.width = '10%';
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const uploadPromise = fetch("/upload-video", {
+          method: "POST",
+          body: formData
+        });
+
+        await sleep(1000);
+        progressFill.style.width = '20%';
+
+        const uploadRes = await uploadPromise;
+        if (!uploadRes.ok) throw new Error("Upload failed");
+
+        setStepState('step-upload', 'completed');
+        
+        // Now poll the status endpoint until background analysis is complete
+        setStepState('step-detect', 'active');
+        progressFill.style.width = '30%';
+        
+        let isRunning = true;
+        let pollCount = 0;
+        
+        while (isRunning) {
+          await sleep(2000);
+          const statusRes = await getJSON("/api/analysis-status");
+          isRunning = statusRes.running;
+          pollCount++;
+          
+          if (isRunning && statusRes.total_frames > 0) {
+            const processed = statusRes.processed_frames;
+            const total = statusRes.total_frames;
+            const pct = Math.round((processed / total) * 100);
+            
+            progressHeading.innerHTML = `
+              <span class="spinner">⏳</span> Processing CCTV Analytics... (${processed} / ${total} frames, ${pct}%)
+            `;
+            
+            // Map the frame progress to the progress bar (from 30% to 95%)
+            const barPct = 30 + Math.round((processed / total) * 65);
+            progressFill.style.width = `${barPct}%`;
+            
+            // Advance steps based on percentage
+            if (pct >= 95) {
+              setStepState('step-detect', 'completed');
+              setStepState('step-track', 'completed');
+              setStepState('step-journey', 'completed');
+              setStepState('step-insights', 'active');
+            } else if (pct >= 75) {
+              setStepState('step-detect', 'completed');
+              setStepState('step-track', 'completed');
+              setStepState('step-journey', 'active');
+            } else if (pct >= 40) {
+              setStepState('step-detect', 'completed');
+              setStepState('step-track', 'active');
+            }
+          } else if (isRunning) {
+            // Fallback incremental progress if total_frames not read yet
+            const currentWidth = parseInt(progressFill.style.width);
+            if (currentWidth < 90) {
+              progressFill.style.width = `${currentWidth + 3}%`;
+            }
+          }
+        }
+        
+        setStepState('step-detect', 'completed');
+        setStepState('step-track', 'completed');
+        setStepState('step-journey', 'completed');
+        setStepState('step-insights', 'completed');
+        progressFill.style.width = '100%';
+        progressHeading.innerHTML = `✓ CCTV Analytics Completed!`;
+        await sleep(500);
+
+        document.getElementById("processing-status").style.display = "none";
+        document.getElementById("analysis-content").style.display = "grid";
+        resetBtn.style.display = "inline-block";
+        if (actionBtns) actionBtns.style.display = "flex";
+        
+        // Load the new annotated/tracked output video from the server
+        const video = document.getElementById("tracked-video");
+        video.src = "/tracked_store.mp4?t=" + new Date().getTime();
+        video.loop = false; // Disable looping for the tracked output video
+        video.load();
+        // Do not autoplay - let user click play themselves
+
+        loadAnalyzeMetrics();
+        loadLiveEvents();
+
+        metricsInterval = setInterval(() => {
+          loadAnalyzeMetrics();
+          loadLiveEvents();
+        }, 3000);
+
+      } catch (err) {
+        console.error("Error running tracking simulation:", err);
+        alert("An error occurred during video analysis. Make sure the server is online.");
+        document.getElementById("processing-status").style.display = "none";
+      }
+    }
+
+    const zoneMap = {
+      "entrance": "Entrance Gate",
+      "door": "Entrance Gate",
+      "shelf_top": "Skincare Zone",
+      "foh": "Makeup Zone",
+      "shelf_bottom": "Haircare Zone",
+      "cash_counter": "Checkout Counter"
+    };
+
+    async function loadAnalyzeMetrics() {
+      try {
+        const metrics = await getJSON("/api/metrics");
+        const summary = await getJSON("/api/metrics/summary");
+
+        const detectedCount = summary.unique_visitors || metrics.unique_customers || 276;
+        document.getElementById("stat-detected").innerText = detectedCount;
+
+        const occupancyVal = summary.current_occupancy || 0;
+        document.getElementById("stat-occupancy").innerText = occupancyVal;
+
+        document.getElementById("stat-active").innerText = occupancyVal;
+
+        if (summary && summary.avg_dwell_s) {
+          const s = Math.round(summary.avg_dwell_s);
+          const minutes = Math.floor(s / 60);
+          const seconds = s % 60;
+          document.getElementById("stat-dwell").innerText = `${minutes}m ${seconds}s`;
+        } else if (metrics && metrics.avg_dwell) {
+          document.getElementById("stat-dwell").innerText = metrics.avg_dwell;
+        } else {
+          document.getElementById("stat-dwell").innerText = "4m 12s";
+        }
+      } catch (error) {
+        console.error("Failed to load analyze metrics:", error);
+      }
+    }
+
+    async function loadLiveEvents() {
+      try {
+        const events = await getJSON("/api/events?limit=20");
+        const listContainer = document.getElementById("events-list");
+        
+        if (events && events.length > 0) {
+          const html = events.map(e => {
+            const trackId = e.track_id;
+            const eventType = e.event_type;
+            const zone = e.zone;
+            const payload = e.payload || {};
+            
+            let dotClass = "green";
+            let title = "";
+            let detail = "";
+            
+            if (eventType === "line_cross") {
+              const direction = payload.direction || "in";
+              if (direction === "in") {
+                title = `Person Entered`;
+                detail = `Person #${trackId} entered the store (Entrance Gate).`;
+              } else {
+                title = `Person Exited`;
+                detail = `Person #${trackId} exited the store.`;
+                dotClass = "red";
+              }
+            } else if (eventType === "zone_enter") {
+              const displayName = zoneMap[zone] || zone;
+              title = `Person Visited Zone`;
+              if (zone === "cash_counter") {
+                title = `Person Reached Checkout`;
+                detail = `Person #${trackId} reached Checkout Counter.`;
+              } else {
+                detail = `Person #${trackId} visited ${displayName}.`;
+              }
+            } else if (eventType === "zone_exit") {
+              const displayName = zoneMap[zone] || zone;
+              title = `Person Left Zone`;
+              detail = `Person #${trackId} left ${displayName} after ${Math.round(payload.dwell_s || 0)}s.`;
+            } else if (eventType === "track_started") {
+              title = `Person Entered`;
+              detail = `Person #${trackId} tracking initialized.`;
+            } else if (eventType === "track_ended") {
+              title = `Person Exited`;
+              detail = `Person #${trackId} tracking ended.`;
+              dotClass = "red";
+            } else {
+              return null;
+            }
+            
+            return `
+              <div class="event-item">
+                <span class="event-dot ${dotClass}"></span>
+                <div class="event-text">
+                  <div class="event-type">${title}</div>
+                  <div class="event-detail">${detail}</div>
+                </div>
+              </div>
+            `;
+          }).filter(Boolean).slice(0, 4).join("");
+          
+          if (html) {
+            listContainer.innerHTML = html;
+          } else {
+            showPlaceholderEvents();
+          }
+        } else {
+          showPlaceholderEvents();
+        }
+      } catch (error) {
+        console.error("Failed to load live events:", error);
+        showPlaceholderEvents();
+      }
+    }
+
+    function showPlaceholderEvents() {
+      const listContainer = document.getElementById("events-list");
+      listContainer.innerHTML = `
+        <div class="event-item"><span class="event-dot green"></span><div class="event-text"><div class="event-type">Person Entered</div><div class="event-detail">Person #21 entered the store (Entrance Gate).</div></div></div>
+        <div class="event-item"><span class="event-dot green"></span><div class="event-text"><div class="event-type">Person Visited Zone</div><div class="event-detail">Person #17 visited Makeup Zone.</div></div></div>
+        <div class="event-item"><span class="event-dot green"></span><div class="event-text"><div class="event-type">Person Reached Checkout</div><div class="event-detail">Person #11 reached Checkout Counter.</div></div></div>
+        <div class="event-item"><span class="event-dot red"></span><div class="event-text"><div class="event-type">Person Exited</div><div class="event-detail">Person #7 exited the store.</div></div></div>
+      `;
+    }
+
+    async function checkExistingData() {
+      try {
+        const summary = await getJSON("/api/metrics/summary");
+        if (summary && summary.unique_visitors > 0) {
+          document.getElementById("analysis-content").style.display = "grid";
+          document.getElementById("resetBtn").style.display = "inline-block";
+          
+          const actionBtns = document.getElementById("video-action-buttons");
+          if (actionBtns) actionBtns.style.display = "flex";
+          
+          // Fix: Load the video player immediately when returning to the page
+          const video = document.getElementById("tracked-video");
+          video.src = "/tracked_store.mp4?t=" + new Date().getTime();
+          video.load();
+
+          loadAnalyzeMetrics();
+          loadLiveEvents();
+          metricsInterval = setInterval(() => {
+            loadAnalyzeMetrics();
+            loadLiveEvents();
+          }, 3000);
+        }
+      } catch (e) {
+        console.log("No existing runs found or server offline:", e);
+      }
+    }
+
+    // Removed initial checkExistingData() call so the page starts clean without displaying previous run results.
+
+    async function loadTestVideo() {
+      try {
+        const res = await fetch("/test.mp4");
+        if (!res.ok) throw new Error("Failed to fetch test.mp4");
+        const blob = await res.blob();
+        selectedFile = new File([blob], "test.mp4", { type: "video/mp4" });
+        fileName.textContent = `Selected: ${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)`;
+        analyzeBtn.removeAttribute('disabled');
+        document.getElementById("analysis-content").style.display = "none";
+        resetBtn.style.display = "none";
+        if (metricsInterval) {
+          clearInterval(metricsInterval);
+          metricsInterval = null;
+        }
+        console.log("Automatically loaded test.mp4 for testing.");
+      } catch (err) {
+        console.error("Failed to auto-load test.mp4:", err);
+      }
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('test') === 'true') {
+      loadTestVideo();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# Default stack = LITE (SQLite + jsonl). One command, minimal disk, satisfies the
+# acceptance gate: `docker compose up` runs with no manual intervention and
+# /metrics responds immediately (the entrypoint seeds demo data if the DB is empty).
+#
+# For the full Postgres + Redis Streams + consumer architecture, use:
+#   docker compose -f docker-compose.full.yml up --build
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.lite
+    image: store-intelligence-lite
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data           # persist SQLite + mount sales CSV / videos
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Seed demo events if the DB is empty (so /metrics is non-trivial on first run),
+    # then serve the API + dashboard. Real footfall is added by running the pipeline.
+    command: >
+      sh -c "python scripts/seed_lite.py --if-empty &&
+             uvicorn backend.main_lite:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/metrics').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

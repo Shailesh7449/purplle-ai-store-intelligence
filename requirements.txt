@@ -1,0 +1,29 @@
+# NOTE: PyTorch is installed CPU-only via the Dockerfile (--index-url cpu wheels)
+# to keep the image small. If you install locally, see the comment at the bottom.
+
+# --- Vision pipeline ---
+ultralytics==8.3.0          # YOLOv8 detection + built-in ByteTrack
+opencv-python-headless==4.10.0.84
+numpy==1.26.4
+
+# --- Backend / API ---
+fastapi==0.115.0
+python-multipart==0.0.30
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+
+# --- Storage / streaming ---
+psycopg[binary]==3.2.3      # PostgreSQL driver
+redis==5.0.8                # Redis Streams client
+
+# --- Utils ---
+python-dotenv==1.0.1
+httpx==0.27.2
+
+# --- Dev / tests ---
+pytest==8.3.3
+
+# To install LOCALLY with CPU-only torch (much smaller), run FIRST:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# then:  pip install -r requirements.txt

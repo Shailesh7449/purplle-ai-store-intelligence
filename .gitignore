@@ -1,0 +1,28 @@
+# --- per challenge rules: never commit datasets / video ---
+data/videos/
+data/output/
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# models (downloaded at runtime)
+*.pt
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+venv312/
+.env
+*.egg-info/
+.pytest_cache/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+data/sales/
+*.db
+data/store.db

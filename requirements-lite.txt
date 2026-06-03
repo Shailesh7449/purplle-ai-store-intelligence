@@ -1,0 +1,20 @@
+# LITE MODE — no Docker, no Redis, no Postgres. SQLite is stdlib.
+# Install CPU-only torch FIRST so ultralytics doesn't pull ~5 GB of CUDA libs:
+#   pip install torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cpu
+# then:
+#   pip install -r requirements-lite.txt
+
+# --- Vision pipeline ---
+ultralytics==8.3.0          # YOLOv8 + built-in ByteTrack
+opencv-python-headless==4.10.0.84
+numpy==1.26.4
+
+# --- Backend / API (SQLite via Python stdlib, no driver needed) ---
+fastapi==0.115.0
+python-multipart==0.0.30
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+
+# --- Dev ---
+pytest==8.3.3

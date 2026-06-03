@@ -1,0 +1,24 @@
+# LITE image — CPU-only torch, SQLite. Small enough for a laptop / acceptance gate.
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+
+# OpenCV / ultralytics runtime libs (no GUI)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 libglib2.0-0 ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# CPU-ONLY PyTorch first => avoids ~5 GB of CUDA libs.
+RUN pip install --no-cache-dir \
+    torch==2.4.1 torchvision==0.19.1 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+COPY requirements-lite.txt .
+RUN pip install --no-cache-dir -r requirements-lite.txt
+
+COPY . .
+
+EXPOSE 8000
+CMD ["uvicorn", "backend.main_lite:app", "--host", "0.0.0.0", "--port", "8000"]

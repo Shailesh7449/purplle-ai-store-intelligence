@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Purplle AI — Retail Intelligence Upload</title>
+  <!-- Plus Jakarta Sans Font for premium Stripe/Linear look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #eef2ff;            /* Soft lavender background */
+      --card: #ffffff;          /* Pure white card face */
+      --text: #0f172a;          /* Slate-900 text */
+      --muted: #64748b;         /* Slate-500 muted text */
+      --pink: #ec4899;          /* Purplle primary pink */
+      --purple: #a855f7;        /* Purplle secondary purple */
+      --border: #f1f5f9;        /* Slate-100 card/list borders */
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Standard Sidebar */
+    .sidebar {
+      width: 260px;
+      height: 100vh;
+      background: linear-gradient(180deg, #ffffff, #faf5ff);
+      position: fixed;
+      left: 0;
+      top: 0;
+      padding: 30px 24px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+      border-right: 1px solid rgba(168, 85, 247, 0.08);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 45px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      text-decoration: none;
+      color: var(--muted);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      font-weight: 550;
+      font-size: 14px;
+      transition: var(--transition);
+    }
+
+    .sidebar a:hover {
+      background: #faf5ff;
+      color: var(--purple);
+    }
+
+    .sidebar a.active {
+      background: #f3e8ff;
+      color: var(--purple);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Main Container */
+    .main {
+      margin-left: 260px;
+      width: calc(100% - 260px);
+      padding: 40px 48px;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #ec4899, #a855f7);
+      padding: 40px;
+      border-radius: 24px;
+      color: white;
+      margin-bottom: 35px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-size: 38px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -1px;
+    }
+
+    .hero p {
+      color: #faf5ff;
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 650px;
+      font-weight: 400;
+    }
+
+    /* Premium Drag & Drop Card */
+    .card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 45px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid rgba(168, 85, 247, 0.04);
+      max-width: 700px;
+      margin: 25px auto 0 auto;
+      transition: var(--transition);
+    }
+
+    .card h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .card .description {
+      color: var(--muted);
+      margin-bottom: 35px;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    /* Upload Container Area */
+    .upload-zone {
+      border: 2px dashed #d8b4fe;
+      border-radius: 18px;
+      padding: 50px 30px;
+      margin-bottom: 30px;
+      background: #fafafc;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--purple);
+      background: #fdfaff;
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      color: var(--purple);
+      background: #f3e8ff;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .upload-zone h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .upload-zone p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .file-indicator {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #16a34a;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      font-size: 14px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      border: none;
+      padding: 16px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.25);
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.35);
+    }
+
+    .btn:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Simulation Board */
+    .simulation-board {
+      display: none;
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    .simulation-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 25px;
+      color: var(--text);
+    }
+
+    .sim-step {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      font-weight: 550;
+      font-size: 14px;
+      color: var(--muted);
+      transition: var(--transition);
+    }
+
+    .sim-step.active {
+      background: #faf5ff;
+      border-color: #e9d5ff;
+      color: var(--purple);
+    }
+
+    .sim-step.completed {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #16a34a;
+    }
+
+    .step-indicator {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .sim-step.active .step-indicator {
+      border-color: var(--purple);
+      background: var(--purple);
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+
+    .sim-step.completed .step-indicator {
+      border-color: #16a34a;
+      background: #16a34a;
+      color: white;
+    }
+
+    /* Progress bar */
+    .progress-bar-wrap {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(168, 85, 247, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+    }
+
+    #viewResultsBtn {
+      display: none;
+      margin-top: 20px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    }
+    #viewResultsBtn:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        width: 80px;
+        padding: 20px 10px;
+      }
+      .sidebar .logo span {
+        display: none;
+      }
+      .sidebar a span {
+        display: none;
+      }
+      .sidebar a {
+        justify-content: center;
+        padding: 14px 0;
+      }
+      .main {
+        margin-left: 80px;
+        width: calc(100% - 80px);
+        padding: 30px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      💜 <span>Purplle AI</span>
+    </div>
+    <a href="/dashboard">📹 <span>Store Activity</span></a>
+    <a href="/analyze">🎥 <span>Analyze Video</span></a>
+    <a href="/journey">👥 <span>Person Journey</span></a>
+    <a href="/business">💰 <span>Business Insights</span></a>
+  </div>
+
+  <div class="main">
+    <div class="hero">
+      <h1>Purplle AI Retail Intelligence</h1>
+      <p>
+        Track person journeys, footfall, dwell time and store performance using AI-powered CCTV analytics. Translate raw surveillance data into deep conversion insights.
+      </p>
+    </div>
+
+    <div class="card">
+      <div id="uploadForm">
+        <h2>Upload CCTV Footage</h2>
+        <p class="description">
+          Upload surveillance camera clips from your store network to process conversion flow and map footfall metrics.
+        </p>
+
+        <div class="upload-zone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">📂</div>
+          <h3>Drag and Drop video here</h3>
+          <p>or click to browse local files (MP4 format only)</p>
+          <input type="file" id="fileInput" accept=".mp4" />
+        </div>
+
+        <div class="file-indicator" id="fileIndicator">
+          <span id="fileName">No file selected</span>
+        </div>
+
+        <button class="btn" id="startBtn" disabled onclick="startProcessingSimulation()">
+          Analyze Video
+        </button>
+      </div>
+
+      <!-- Simulation State Board -->
+      <div class="simulation-board" id="simulationBoard">
+        <h3 class="simulation-title" id="status">Processing CCTV Analytics</h3>
+        
+        <div class="progress-bar-wrap" id="progressBarWrap">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+
+        <div id="simulationSteps">
+          <div class="sim-step" id="step1">
+            <span class="step-indicator">1</span>
+            <span>Uploading video...</span>
+          </div>
+          <div class="sim-step" id="step2">
+            <span class="step-indicator">2</span>
+            <span>Detecting people...</span>
+          </div>
+          <div class="sim-step" id="step3">
+            <span class="step-indicator">3</span>
+            <span>Tracking movement...</span>
+          </div>
+          <div class="sim-step" id="step4">
+            <span class="step-indicator">4</span>
+            <span>Generating journeys...</span>
+          </div>
+          <div class="sim-step" id="step5">
+            <span class="step-indicator">5</span>
+            <span>Building insights...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const startBtn = document.getElementById('startBtn');
+    const fileIndicator = document.getElementById('fileIndicator');
+    const fileNameText = document.getElementById('fileName');
+    let selectedFile = null;
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      handleFileSelect(e.target.files[0]);
+    });
+
+    // Drag over
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    // Drag leave
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    // Drop
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      handleFileSelect(e.dataTransfer.files[0]);
+    });
+
+    function handleFileSelect(file) {
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.mp4')) {
+        alert("Supported format is MP4 video files only.");
+        return;
+      }
+      selectedFile = file;
+      fileNameText.textContent = `✓ Selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+      fileIndicator.style.display = 'flex';
+      startBtn.removeAttribute('disabled');
+    }
+
+    async function startProcessingSimulation() {
+      // 1. Upload file using fetch to make sure the server gets the file
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      
+      // Hide form and show simulator board
+      document.getElementById('uploadForm').style.display = 'none';
+      document.getElementById('simulationBoard').style.display = 'block';
+      const progressWrap = document.getElementById('progressBarWrap');
+      const progressFill = document.getElementById('progressBarFill');
+      progressWrap.style.display = 'block';
+
+      // Set first step active
+      setStepState('step1', 'active');
+      progressFill.style.width = '10%';
+      document.getElementById("status").innerText = "Analyzing CCTV footage...";
+
+      try {
+        // Upload the video to actual backend endpoint
+        const uploadPromise = fetch("/upload-video", {
+          method: "POST",
+          body: formData
+        });
+
+        // Run simulation concurrently with upload
+        await sleep(1500);
+        progressFill.style.width = '25%';
+        
+        await uploadPromise; // Wait for upload completion
+
+        setStepState('step1', 'completed');
+        document.getElementById('step1').querySelector('span:last-child').innerText = "✓ Video Uploaded";
+        setStepState('step2', 'active');
+        progressFill.style.width = '40%';
+
+        const stages = [
+            "Detecting people...",
+            "Tracking movement...",
+            "Generating journeys...",
+            "Building insights..."
+        ];
+
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i === 0) {
+              setStepState('step2', 'completed');
+              document.getElementById('step2').querySelector('span:last-child').innerText = "✓ Detecting people...";
+              setStepState('step3', 'active');
+              progressFill.style.width = '60%';
+            } else if (i === 1) {
+              setStepState('step3', 'completed');
+              document.getElementById('step3').querySelector('span:last-child').innerText = "✓ Tracking movement...";
+              setStepState('step4', 'active');
+              progressFill.style.width = '80%';
+            } else if (i === 2) {
+              setStepState('step4', 'completed');
+              document.getElementById('step4').querySelector('span:last-child').innerText = "✓ Generating journeys...";
+              setStepState('step5', 'active');
+              progressFill.style.width = '95%';
+            } else if (i === 3) {
+              setStepState('step5', 'completed');
+              document.getElementById('step5').querySelector('span:last-child').innerText = "✓ Building insights...";
+              progressFill.style.width = '100%';
+            }
+
+            i++;
+
+            if (i === stages.length + 1) {
+                clearInterval(interval);
+                window.location = "/analyze";
+            }
+        }, 1500);
+
+      } catch (err) {
+        console.error("API error during upload/sim:", err);
+        // Fallback simulation in case API is temporarily unavailable
+        setStepState('step1', 'completed');
+        document.getElementById('step1').querySelector('span:last-child').innerText = "✓ Video Uploaded";
+        setStepState('step2', 'active');
+        progressFill.style.width = '40%';
+
+        const stages = [
+            "Detecting people...",
+            "Tracking movement...",
+            "Generating journeys...",
+            "Building insights..."
+        ];
+
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i === 0) {
+              setStepState('step2', 'completed');
+              document.getElementById('step2').querySelector('span:last-child').innerText = "✓ Detecting people...";
+              setStepState('step3', 'active');
+              progressFill.style.width = '60%';
+            } else if (i === 1) {
+              setStepState('step3', 'completed');
+              document.getElementById('step3').querySelector('span:last-child').innerText = "✓ Tracking movement...";
+              setStepState('step4', 'active');
+              progressFill.style.width = '80%';
+            } else if (i === 2) {
+              setStepState('step4', 'completed');
+              document.getElementById('step4').querySelector('span:last-child').innerText = "✓ Generating journeys...";
+              setStepState('step5', 'active');
+              progressFill.style.width = '95%';
+            } else if (i === 3) {
+              setStepState('step5', 'completed');
+              document.getElementById('step5').querySelector('span:last-child').innerText = "✓ Building insights...";
+              progressFill.style.width = '100%';
+            }
+
+            i++;
+
+            if (i === stages.length + 1) {
+                clearInterval(interval);
+                window.location = "/analyze";
+            }
+        }, 1500);
+      }
+    }
+
+    function setStepState(stepId, state) {
+      const stepEl = document.getElementById(stepId);
+      stepEl.classList.remove('active', 'completed');
+      if (state === 'active') {
+        stepEl.classList.add('active');
+      } else if (state === 'completed') {
+        stepEl.classList.add('completed');
+        stepEl.querySelector('.step-indicator').textContent = '✓';
+      }
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+</html>

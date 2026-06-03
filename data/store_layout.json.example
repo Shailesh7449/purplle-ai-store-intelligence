@@ -1,0 +1,16 @@
+{
+  "_comment": "Purplle Brigade Bangalore — store layout. Copy to data/store_layout.json and tune polygons to YOUR camera view. Coords are normalised 0..1 of frame width/height. 'kind': product | foh | counter | entrance.",
+  "zones": [
+    {"name": "entrance",     "kind": "entrance", "polygon": [[0.00,0.00],[0.12,0.00],[0.12,1.00],[0.00,1.00]]},
+    {"name": "shelf_top",    "kind": "product",  "polygon": [[0.12,0.00],[0.85,0.00],[0.85,0.30],[0.12,0.30]],
+     "brands_top": ["Salm/EB","TFS","GV","DermDoc","Minimalist","Aqualogica","Foxtale/Pilgrim","JC/D&K"]},
+    {"name": "foh",          "kind": "foh",      "polygon": [[0.12,0.30],[0.85,0.30],[0.85,0.72],[0.12,0.72]],
+     "units": ["Nail Unit","Fragrance","Makeup Unit x2"]},
+    {"name": "shelf_bottom", "kind": "product",  "polygon": [[0.12,0.72],[0.85,0.72],[0.85,1.00],[0.12,1.00]],
+     "brands_bottom": ["Maybelline","Faces","Lakme","Mars+Nybae/Swiss+","Mens Care","Alps","Lo'real","Beauty"]},
+    {"name": "cash_counter", "kind": "counter",  "polygon": [[0.85,0.00],[1.00,0.00],[1.00,1.00],[0.85,1.00]]}
+  ],
+  "lines": [
+    {"name": "door", "p1": [0.10, 0.00], "p2": [0.10, 1.00]}
+  ]
+}
