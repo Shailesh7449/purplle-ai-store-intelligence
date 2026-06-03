@@ -1,11 +1,5 @@
 services:
   - type: web
     name: purplle-store-intelligence
-    env: python
-    buildCommand: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt
-    startCommand: uvicorn backend.main_lite:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.3
-      - key: PORT
-        value: 8000
+    env: docker
+    dockerfilePath: Dockerfile
