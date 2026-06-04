@@ -642,6 +642,13 @@
     async function startAnalysis() {
       if (!selectedFile) return;
 
+      // Clear URL query parameters (like ?demo=true) so the session shifts to custom upload
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) {
+        console.log("Could not update URL history:", e);
+      }
+
       // Keep the layout grid and video player hidden until the analysis is complete
       document.getElementById("analysis-content").style.display = "none";
       resetBtn.style.display = "none";
@@ -921,11 +928,17 @@
     }
 
     async function updateVideoSourceInfo() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDemoMode = urlParams.get('demo') === 'true';
+
       try {
         const data = await getJSON("/api/video-source");
         const badge = document.getElementById("video-source-badge");
         if (badge) {
-          if (data.source === "generated") {
+          if (isDemoMode) {
+            badge.textContent = "Demo Video";
+            badge.style.background = "linear-gradient(135deg, var(--pink), var(--purple))"; // Pink-purple gradient
+          } else if (data.source === "generated") {
             badge.textContent = "Uploaded Video";
             badge.style.background = "linear-gradient(135deg, #10b981, #059669)"; // Green gradient
           } else {
