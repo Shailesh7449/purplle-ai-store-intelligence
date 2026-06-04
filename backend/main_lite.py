@@ -134,6 +134,20 @@ async def upload_video(background_tasks: BackgroundTasks, file: UploadFile = Fil
 
         target_path.write_bytes(content)
 
+        # Clear old generated video immediately to avoid serving stale video
+        output_video = Path("data/output/tracked_store.mp4")
+        if output_video.exists():
+            try:
+                output_video.unlink()
+            except Exception as e:
+                log.warning(f"Could not delete old video: {e}")
+
+        # Clear database tables immediately
+        try:
+            store.clear_tables()
+        except Exception as e:
+            log.warning(f"Could not clear tables: {e}")
+
         background_tasks.add_task(run_analysis_in_background, target_path)
 
         return {"status": "ok", "video": "/tracked_store.mp4"}
@@ -327,7 +341,7 @@ def footfall(window_minutes: int = 60) -> list[dict]:
 # ---------- dashboard ----------
 @app.get("/")
 def index():
-    return RedirectResponse(url="/analyze")
+    return RedirectResponse(url="/analyze?demo=true")
 
 
 @app.get("/dashboard")

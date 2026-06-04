@@ -615,8 +615,28 @@
       document.getElementById("empty-state").style.display = "block";
       if (metricsInterval) {
         clearInterval(metricsInterval);
+        metricsInterval = null;
       }
       document.getElementById("processing-status").style.display = "none";
+
+      // Instantly clear video src and reload player
+      const video = document.getElementById("tracked-video");
+      if (video) {
+        video.src = "";
+        try {
+          video.removeAttribute("src");
+          video.load();
+        } catch (e) {}
+      }
+
+      // Reset metrics UI
+      document.getElementById("stat-detected").innerText = "--";
+      document.getElementById("stat-active").innerText = "--";
+      document.getElementById("stat-occupancy").innerText = "--";
+      document.getElementById("stat-dwell").innerText = "--";
+
+      // Clear live events UI
+      document.getElementById("events-list").innerHTML = "";
     }
 
     async function startAnalysis() {
@@ -629,6 +649,16 @@
       const actionBtns = document.getElementById("video-action-buttons");
       if (actionBtns) actionBtns.style.display = "none";
       
+      // Instantly clear video src and reload player
+      const video = document.getElementById("tracked-video");
+      if (video) {
+        video.src = "";
+        try {
+          video.removeAttribute("src");
+          video.load();
+        } catch (e) {}
+      }
+
       // Reset/clear metrics values immediately
       document.getElementById("stat-detected").innerText = "--";
       document.getElementById("stat-active").innerText = "--";
@@ -644,6 +674,7 @@
 
       if (metricsInterval) {
         clearInterval(metricsInterval);
+        metricsInterval = null;
       }
 
       document.getElementById("processing-status").style.display = "block";
@@ -913,37 +944,47 @@
     }
 
     async function checkExistingData() {
-      try {
-        // Always show the video and metrics by default so Render judges immediately see active analytics
-        document.getElementById("analysis-content").style.display = "grid";
-        document.getElementById("empty-state").style.display = "none";
-        document.getElementById("resetBtn").style.display = "inline-block";
-        
-        const actionBtns = document.getElementById("video-action-buttons");
-        if (actionBtns) actionBtns.style.display = "flex";
-        
-        const video = document.getElementById("tracked-video");
-        video.src = "/tracked_store.mp4?t=" + new Date().getTime();
-        video.load();
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDemoMode = urlParams.get('demo') === 'true';
 
-        loadAnalyzeMetrics();
-        loadLiveEvents();
-        metricsInterval = setInterval(() => {
+      if (isDemoMode) {
+        try {
+          document.getElementById("analysis-content").style.display = "grid";
+          document.getElementById("empty-state").style.display = "none";
+          document.getElementById("resetBtn").style.display = "inline-block";
+          
+          const actionBtns = document.getElementById("video-action-buttons");
+          if (actionBtns) actionBtns.style.display = "flex";
+          
+          const video = document.getElementById("tracked-video");
+          video.src = "/tracked_store.mp4?t=" + new Date().getTime();
+          video.load();
+
           loadAnalyzeMetrics();
           loadLiveEvents();
-        }, 3000);
+          
+          if (metricsInterval) {
+            clearInterval(metricsInterval);
+          }
+          metricsInterval = setInterval(() => {
+            loadAnalyzeMetrics();
+            loadLiveEvents();
+          }, 3000);
 
-        updateVideoSourceInfo();
-      } catch (e) {
-        console.log("Error checking existing data:", e);
-        // Fallback display anyway to ensure a playable video is present
-        document.getElementById("analysis-content").style.display = "grid";
-        document.getElementById("empty-state").style.display = "none";
-        document.getElementById("resetBtn").style.display = "inline-block";
-        const video = document.getElementById("tracked-video");
-        video.src = "/tracked_store.mp4";
-        video.load();
-        updateVideoSourceInfo();
+          updateVideoSourceInfo();
+        } catch (e) {
+          console.log("Error checking existing data:", e);
+          document.getElementById("analysis-content").style.display = "grid";
+          document.getElementById("empty-state").style.display = "none";
+          document.getElementById("resetBtn").style.display = "inline-block";
+          const video = document.getElementById("tracked-video");
+          video.src = "/tracked_store.mp4";
+          video.load();
+          updateVideoSourceInfo();
+        }
+      } else {
+        // Normal production mode: start with an empty state every time.
+        resetAnalysisState();
       }
     }
 

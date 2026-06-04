@@ -89,7 +89,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 @app.get("/")
 def index() -> RedirectResponse:
-    return RedirectResponse(url="/analyze")
+    return RedirectResponse(url="/analyze?demo=true")
 
 
 @app.get("/dashboard")
@@ -127,6 +127,23 @@ async def upload_video(background_tasks: BackgroundTasks, file: UploadFile = Fil
     target_path = upload_dir / "uploaded.mp4"
     content = await file.read()
     target_path.write_bytes(content)
+
+    # Clear old generated video immediately to avoid serving stale video
+    output_video = Path("data/output/tracked_store.mp4")
+    if output_video.exists():
+        try:
+            output_video.unlink()
+        except Exception as e:
+            logger.warning(f"Could not delete old video: {e}")
+
+    # Clear previous analytics immediately (truncate tables)
+    try:
+        db = Database()
+        with db.conn() as c:
+            c.execute("TRUNCATE TABLE events, tracks, alerts RESTART IDENTITY CASCADE;")
+            c.commit()
+    except Exception as e:
+        logger.warning(f"Failed to truncate PostgreSQL tables: {e}")
 
     background_tasks.add_task(run_analysis_in_background, target_path)
 
