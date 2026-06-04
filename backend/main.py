@@ -48,6 +48,10 @@ _schema_initialized = False
 @app.on_event("startup")
 async def _startup() -> None:
     """Non-blocking startup: attempt schema init but don't wait for it."""
+    # Ensure data/output and data/videos directories exist
+    for path in ["data/output", "data/videos"]:
+        p = Path(path)
+        p.mkdir(parents=True, exist_ok=True)
     global _schema_initialized
     try:
         # Try to init schema with 3-second timeout

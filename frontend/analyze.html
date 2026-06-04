@@ -388,7 +388,7 @@
   <!-- Mobile Header -->
   <div class="mobile-header">
     <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
-    <div class="mobile-logo">💜 Purplle AI <span class="demo-badge">Demo Mode</span></div>
+    <div class="mobile-logo">💜 Purplle AI</div>
     <div style="width: 24px;"></div>
   </div>
 
@@ -396,7 +396,7 @@
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
   <div class="sidebar">
-    <div class="logo">💜 <span>Purplle AI</span><span class="demo-badge">Demo Mode</span></div>
+    <div class="logo">💜 <span>Purplle AI</span></div>
     <a href="/dashboard">📹 <span>Store Activity</span></a>
     <a href="/analyze" class="active">🎥 <span>Analyze Video</span></a>
     <a href="/journey">👥 <span>Person Journey</span></a>
@@ -474,7 +474,7 @@
     <div id="empty-state" class="empty-state-card">
       <div class="empty-state-icon">🎥</div>
       <h3>No Active CCTV Analysis</h3>
-      <p>Select a CCTV video file and click "Analyze Video" to generate real-time passenger journeys, active tracking streams, and deep store analytics.</p>
+      <p>Upload a CCTV video and click Analyze Video to generate AI-powered analytics.</p>
     </div>
 
     <!-- Main Content Layout (Hidden by default until video is processed or existing runs exist) -->
@@ -487,11 +487,7 @@
           </video>
         </div>
         
-        <!-- Video Source Info Badge -->
-        <div style="margin-top: 15px; padding: 10px 16px; background: #faf5ff; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.08); display: flex; align-items: center; justify-content: space-between;">
-          <span style="font-size: 13.5px; font-weight: 600; color: var(--muted);">Active Video Source:</span>
-          <span id="video-source-badge" style="font-size: 12px; font-weight: 700; color: white; padding: 4px 10px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; background: linear-gradient(135deg, var(--pink), var(--purple));">Loading...</span>
-        </div>
+
 
         <!-- Action Buttons underneath the video -->
         <div id="video-action-buttons" style="display: flex; gap: 15px; margin-top: 20px;">
@@ -788,7 +784,6 @@
 
         loadAnalyzeMetrics();
         loadLiveEvents();
-        updateVideoSourceInfo();
 
         metricsInterval = setInterval(() => {
           loadAnalyzeMetrics();
@@ -927,40 +922,21 @@
       `;
     }
 
-    async function updateVideoSourceInfo() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const isDemoMode = urlParams.get('demo') === 'true';
-
-      try {
-        const data = await getJSON("/api/video-source");
-        const badge = document.getElementById("video-source-badge");
-        if (badge) {
-          if (isDemoMode) {
-            badge.textContent = "Demo Video";
-            badge.style.background = "linear-gradient(135deg, var(--pink), var(--purple))"; // Pink-purple gradient
-          } else if (data.source === "generated") {
-            badge.textContent = "Uploaded Video";
-            badge.style.background = "linear-gradient(135deg, #10b981, #059669)"; // Green gradient
-          } else {
-            badge.textContent = "Demo Video";
-            badge.style.background = "linear-gradient(135deg, var(--pink), var(--purple))"; // Pink-purple gradient
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch video source info:", err);
-        const badge = document.getElementById("video-source-badge");
-        if (badge) {
-          badge.textContent = "Fallback Demo Video";
-          badge.style.background = "linear-gradient(135deg, var(--pink), var(--purple))";
-        }
-      }
-    }
-
     async function checkExistingData() {
       const urlParams = new URLSearchParams(window.location.search);
       const isDemoMode = urlParams.get('demo') === 'true';
 
-      if (isDemoMode) {
+      let hasAnalysis = false;
+      try {
+        const data = await getJSON("/api/video-source");
+        if (data.source === "generated") {
+          hasAnalysis = true;
+        }
+      } catch (e) {
+        console.error("Error checking video source:", e);
+      }
+
+      if (isDemoMode || hasAnalysis) {
         try {
           document.getElementById("analysis-content").style.display = "grid";
           document.getElementById("empty-state").style.display = "none";
@@ -983,8 +959,6 @@
             loadAnalyzeMetrics();
             loadLiveEvents();
           }, 3000);
-
-          updateVideoSourceInfo();
         } catch (e) {
           console.log("Error checking existing data:", e);
           document.getElementById("analysis-content").style.display = "grid";
@@ -993,7 +967,6 @@
           const video = document.getElementById("tracked-video");
           video.src = "/tracked_store.mp4";
           video.load();
-          updateVideoSourceInfo();
         }
       } else {
         // Normal production mode: start with an empty state every time.

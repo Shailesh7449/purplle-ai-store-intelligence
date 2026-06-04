@@ -42,6 +42,10 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 @app.on_event("startup")
 def startup_event():
     log.info("TRACKED VIDEO MODE ENABLED")
+    # Ensure data/output and data/videos directories exist
+    for path in ["data/output", "data/videos"]:
+        p = Path(path)
+        p.mkdir(parents=True, exist_ok=True)
     # Auto-seed database if empty to ensure the demo is functional instantly upon deployment
     try:
         if store.summary()["total_events"] == 0:

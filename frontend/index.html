@@ -510,7 +510,7 @@
   <!-- Mobile Header -->
   <div class="mobile-header">
     <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
-    <div class="mobile-logo">💜 Purplle AI <span class="demo-badge">Demo Mode</span></div>
+    <div class="mobile-logo">💜 Purplle AI</div>
     <div style="width: 24px;"></div>
   </div>
 
@@ -519,7 +519,7 @@
 
   <div class="sidebar">
     <div class="logo">
-      💜 <span>Purplle AI</span><span class="demo-badge">Demo Mode</span>
+      💜 <span>Purplle AI</span>
     </div>
     <a href="/dashboard">📹 <span>Store Activity</span></a>
     <a href="/analyze">🎥 <span>Analyze Video</span></a>
@@ -774,6 +774,17 @@
     function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('open');
       document.getElementById('sidebarOverlay').classList.toggle('active');
+    }
+
+    // Preserve demo mode link parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('demo') === 'true') {
+      const sidebarLinks = document.querySelectorAll('.sidebar a');
+      sidebarLinks.forEach(link => {
+        const url = new URL(link.href, window.location.origin);
+        url.searchParams.set('demo', 'true');
+        link.href = url.pathname + url.search;
+      });
     }
   </script>
 </body>

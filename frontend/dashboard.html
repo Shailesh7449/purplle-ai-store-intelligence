@@ -484,7 +484,7 @@
   <!-- Mobile Header -->
   <div class="mobile-header">
     <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
-    <div class="mobile-logo">💜 Purplle AI <span class="demo-badge">Demo Mode</span></div>
+    <div class="mobile-logo">💜 Purplle AI</div>
     <div style="width: 24px;"></div>
   </div>
 
@@ -493,7 +493,7 @@
 
   <div class="sidebar">
     <div class="logo">
-      💜 <span>Purplle AI</span><span class="demo-badge">Demo Mode</span>
+      💜 <span>Purplle AI</span>
     </div>
     <a href="/dashboard" class="active">📹 <span>Store Activity</span></a>
     <a href="/analyze">🎥 <span>Analyze Video</span></a>
@@ -510,6 +510,7 @@
       </p>
     </div>
 
+    <div id="main-content-layout" style="display: none;">
     <!-- KPIs -->
     <section class="kpis">
       <div class="card">
@@ -699,6 +700,15 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- Production-Ready Clean Empty State -->
+    <div id="empty-state-container" class="card" style="display: none; text-align: center; padding: 60px 40px; margin-top: 20px; border: 1px dashed rgba(168, 85, 247, 0.25); background: var(--card);">
+      <div style="font-size: 50px; margin-bottom: 15px;">📊</div>
+      <h3 style="font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px;">No CCTV Analytics Available</h3>
+      <p style="color: var(--muted); font-size: 14.5px; max-width: 450px; margin: 0 auto 25px auto;">Upload a CCTV video and click Analyze Video to generate AI-powered analytics.</p>
+      <button class="btn" onclick="window.location='/analyze'" style="width: auto; padding: 12px 30px;">Go to Analyze Video</button>
+    </div>
   </div>
 
   <script>
@@ -783,20 +793,59 @@
       }
     }
 
-    // Load data initially
-    loadCCTVDashboardData();
-    // Poll every 4 seconds
-    setInterval(loadCCTVDashboardData, 4000);
+    async function checkAnalysisState() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isDemoMode = urlParams.get('demo') === 'true';
+      
+      // Preserve ?demo=true in sidebar links if present
+      if (isDemoMode) {
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+        sidebarLinks.forEach(link => {
+          const url = new URL(link.href, window.location.origin);
+          url.searchParams.set('demo', 'true');
+          link.href = url.pathname + url.search;
+        });
+      }
 
-    async function loadMetrics(){
+      let hasAnalysis = false;
+      try {
+        const res = await fetch("/api/video-source");
+        const data = await res.json();
+        if (data.source === "generated") {
+          hasAnalysis = true;
+        }
+      } catch (e) {
+        console.error("Error checking video source:", e);
+      }
+
+      if (isDemoMode || hasAnalysis) {
+        document.getElementById("main-content-layout").style.display = "block";
+        document.getElementById("empty-state-container").style.display = "none";
+        return true;
+      } else {
+        document.getElementById("main-content-layout").style.display = "none";
+        document.getElementById("empty-state-container").style.display = "block";
+        return false;
+      }
+    }
+
+    async function initDashboard() {
+      const active = await checkAnalysisState();
+      if (active) {
+        loadCCTVDashboardData();
+        setInterval(loadCCTVDashboardData, 4000);
+        
+        // Also run loadMetrics to query FastAPI
         const response = await fetch("/api/metrics");
         const data = await response.json();
         document.getElementById("footfall").innerText = data.footfall || 304;
         document.getElementById("visitors").innerText = "276";
         document.getElementById("occupancy").innerText = data.current_inside || 12;
         document.getElementById("dwell").innerText = data.avg_dwell || "4m 12s";
+      }
     }
-    loadMetrics();
+
+    initDashboard();
 
     function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('open');
