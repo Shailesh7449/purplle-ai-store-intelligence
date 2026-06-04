@@ -13,7 +13,7 @@ import asyncio
 import logging
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -143,10 +143,26 @@ def analyze() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "analyze.html")
 
 
+@app.get("/api/video-source")
+def video_source() -> dict:
+    video_path = Path("data/output/tracked_store.mp4")
+    if video_path.exists():
+        return {"source": "generated", "path": str(video_path)}
+    else:
+        demo_path = Path("frontend/assets/demo_tracked_store.mp4")
+        return {"source": "demo", "path": str(demo_path)}
+
+
 @app.get("/tracked_store.mp4")
 def tracked_video() -> FileResponse:
     video_path = Path("data/output/tracked_store.mp4")
-    return FileResponse(video_path, media_type="video/mp4")
+    if not video_path.exists():
+        # Fallback to the demo tracked video
+        demo_path = Path("frontend/assets/demo_tracked_store.mp4")
+        if demo_path.exists():
+            return FileResponse(demo_path, media_type="video/mp4", headers={"X-Video-Source": "demo"})
+        raise HTTPException(status_code=404, detail="Tracked video not found")
+    return FileResponse(video_path, media_type="video/mp4", headers={"X-Video-Source": "generated"})
 
 
 @app.get("/test.mp4")

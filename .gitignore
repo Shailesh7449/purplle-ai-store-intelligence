@@ -2,6 +2,7 @@
 data/videos/
 data/output/
 *.mp4
+!frontend/assets/demo_tracked_store.mp4
 *.avi
 *.mov
 *.mkv
