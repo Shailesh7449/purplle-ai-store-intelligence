@@ -41,6 +41,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 @app.on_event("startup")
 def startup_event():
+    log.info("TRACKED VIDEO MODE ENABLED")
     # Auto-seed database if empty to ensure the demo is functional instantly upon deployment
     try:
         if store.summary()["total_events"] == 0:
@@ -117,15 +118,27 @@ def run_analysis_in_background(target_path: Path):
 @app.post("/upload-video")
 async def upload_video(background_tasks: BackgroundTasks, file: UploadFile = File(...)) -> dict:
     try:
+        # Check Content-Length header (if present)
+        content_length = file.headers.get("content-length")
+        if content_length and int(content_length) > 200 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size exceeds the 200 MB limit.")
+
         upload_dir = Path("data/videos")
         upload_dir.mkdir(parents=True, exist_ok=True)
         target_path = upload_dir / "uploaded.mp4"
         content = await file.read()
+        
+        # Verify read byte size
+        if len(content) > 200 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size exceeds the 200 MB limit.")
+
         target_path.write_bytes(content)
 
         background_tasks.add_task(run_analysis_in_background, target_path)
 
         return {"status": "ok", "video": "/tracked_store.mp4"}
+    except HTTPException:
+        raise
     except Exception as e:
         log.error(f"[upload-video] error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to upload video: {e}")

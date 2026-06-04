@@ -429,6 +429,9 @@
             </button>
           </div>
         </div>
+        <div style="margin-top: 12px; font-size: 13.5px; color: var(--muted); display: flex; align-items: center; gap: 6px;">
+          <span>⚠️</span> Large videos may take several minutes on cloud deployment. (Max size: 200 MB)
+        </div>
       </div>
 
       <!-- Processing Status Section (Initially Hidden) -->
@@ -550,7 +553,16 @@
 
     fileInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) {
-        selectedFile = e.target.files[0];
+        const file = e.target.files[0];
+        if (file.size > 200 * 1024 * 1024) {
+          showNotification("File size exceeds the 200 MB limit.", true);
+          fileInput.value = "";
+          selectedFile = null;
+          fileName.textContent = "No file selected";
+          analyzeBtn.setAttribute('disabled', 'true');
+          return;
+        }
+        selectedFile = file;
         fileName.textContent = `Selected: ${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)`;
         analyzeBtn.removeAttribute('disabled');
         
