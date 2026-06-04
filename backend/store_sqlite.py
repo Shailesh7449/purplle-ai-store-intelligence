@@ -65,6 +65,8 @@ class Store:
     @contextmanager
     def conn(self) -> Iterator[sqlite3.Connection]:
         c = sqlite3.connect(self.db_path, timeout=30)
+        c.execute("PRAGMA journal_mode=WAL")
+        c.execute("PRAGMA synchronous=NORMAL")
         c.row_factory = sqlite3.Row
         try:
             yield c

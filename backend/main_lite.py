@@ -15,7 +15,7 @@ import logging
 from pathlib import Path
 import shutil
 
-from fastapi import FastAPI, Query, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, Query, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -116,15 +116,19 @@ def run_analysis_in_background(target_path: Path):
 
 @app.post("/upload-video")
 async def upload_video(background_tasks: BackgroundTasks, file: UploadFile = File(...)) -> dict:
-    upload_dir = Path("data/videos")
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    target_path = upload_dir / "uploaded.mp4"
-    content = await file.read()
-    target_path.write_bytes(content)
+    try:
+        upload_dir = Path("data/videos")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        target_path = upload_dir / "uploaded.mp4"
+        content = await file.read()
+        target_path.write_bytes(content)
 
-    background_tasks.add_task(run_analysis_in_background, target_path)
+        background_tasks.add_task(run_analysis_in_background, target_path)
 
-    return {"status": "ok", "video": "/tracked_store.mp4"}
+        return {"status": "ok", "video": "/tracked_store.mp4"}
+    except Exception as e:
+        log.error(f"[upload-video] error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload video: {e}")
 
 @app.get("/api/analysis-status")
 def analysis_status() -> dict:
@@ -140,6 +144,8 @@ def analyze() -> FileResponse:
 @app.get("/tracked_store.mp4")
 def tracked_video() -> FileResponse:
     video_path = Path("data/output/tracked_store.mp4")
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Tracked video not found")
     return FileResponse(video_path, media_type="video/mp4")
 
 

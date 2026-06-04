@@ -69,6 +69,20 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    .demo-badge {
+      font-size: 10px;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      color: white;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      margin-left: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      vertical-align: middle;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
     .sidebar a {
       display: flex;
@@ -322,6 +336,62 @@
       font-size: 14px;
     }
 
+    /* Mobile Header & Overlay Styles */
+    .mobile-header {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: white;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.08);
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 999;
+    }
+    .hamburger-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--purple);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      transition: var(--transition);
+    }
+    .hamburger-btn:active {
+      background: #f3e8ff;
+    }
+    .mobile-logo {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.3);
+      backdrop-filter: blur(4px);
+      z-index: 998;
+      opacity: 1;
+      pointer-events: none;
+    }
+    .sidebar-overlay.active {
+      display: block !important;
+      pointer-events: auto !important;
+    }
+
     @media (max-width: 900px) {
       .grid {
         grid-template-columns: 1fr;
@@ -346,12 +416,84 @@
         padding: 30px 24px;
       }
     }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .mobile-header {
+        display: flex;
+      }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 260px;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar .logo span, .sidebar a span {
+        display: inline !important;
+      }
+      .sidebar a {
+        justify-content: flex-start !important;
+        padding: 14px 16px !important;
+      }
+      .main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 20px 16px !important;
+      }
+      .hero {
+        padding: 24px !important;
+        border-radius: 16px !important;
+        margin-bottom: 20px !important;
+      }
+      .hero h1 {
+        font-size: 28px !important;
+      }
+      .hero p {
+        font-size: 14px !important;
+      }
+      .card, .panel {
+        padding: 18px !important;
+        border-radius: 16px !important;
+      }
+      .grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+      }
+      .kpis {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Mobile Header -->
+  <div class="mobile-header">
+    <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+    <div class="mobile-logo">💜 Purplle AI <span class="demo-badge">Demo Mode</span></div>
+    <div style="width: 24px;"></div>
+  </div>
+
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
   <div class="sidebar">
     <div class="logo">
-      💜 <span>Purplle AI</span>
+      💜 <span>Purplle AI</span><span class="demo-badge">Demo Mode</span>
     </div>
     <a href="/dashboard" class="active">📹 <span>Store Activity</span></a>
     <a href="/analyze">🎥 <span>Analyze Video</span></a>
@@ -655,6 +797,11 @@
         document.getElementById("dwell").innerText = data.avg_dwell || "4m 12s";
     }
     loadMetrics();
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('active');
+    }
   </script>
 </body>
 </html>

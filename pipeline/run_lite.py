@@ -95,6 +95,58 @@ def main() -> int:
     return process_video(source=args.source, camera_id=args.camera, max_frames=args.max_frames)
 
 
+def check_and_resize_video(video_path: str, target_width: int = 640, target_height: int = 360, max_frames: int = 300) -> str:
+    """Check if the video is at target size and max frames. If not, resize it to a temporary path."""
+    try:
+        import cv2
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            return video_path
+        
+        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
+        
+        # If already 640x360 and <= 300 frames, we don't need to do anything!
+        if w == target_width and h == target_height and total_frames <= max_frames:
+            return video_path
+        
+        # Otherwise, resize the video to 640x360 and limit it to max_frames
+        p = Path(video_path)
+        resized_path = p.parent / f"{p.stem}_resized{p.suffix}"
+        
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+        fourcc = cv2.VideoWriter_fourcc(*"avc1")
+        
+        writer = None
+        try:
+            writer = cv2.VideoWriter(str(resized_path), fourcc, fps, (target_width, target_height))
+        except Exception:
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            writer = cv2.VideoWriter(str(resized_path), fourcc, fps, (target_width, target_height))
+        
+        count = 0
+        while count < max_frames:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            resized = cv2.resize(frame, (target_width, target_height))
+            writer.write(resized)
+            count += 1
+            time.sleep(0.002)
+            
+        cap.release()
+        if writer is not None:
+            writer.release()
+        print(f"[lite] Resized video saved to: {resized_path} ({count} frames)")
+        return str(resized_path)
+    except Exception as e:
+        print(f"[lite] Error during video resizing: {e}. Falling back to original path: {video_path}")
+        return video_path
+
+
 def process_video(source: str | int, camera_id: str = "cam-01",
                   max_frames: int = 0,
                   output_filename: str = "tracked_store.mp4") -> int:
@@ -117,7 +169,9 @@ def process_video(source: str | int, camera_id: str = "cam-01",
 
         anomaly = AnomalyEngine(s, camera_id=camera_id)
         layout = load_layout()
-        gen = EventGenerator(camera_id=camera_id, layout=layout)
+        
+        # Adjust lost_after_frames since we process every 5th frame
+        gen = EventGenerator(camera_id=camera_id, layout=layout, lost_after_frames=6)
 
         output_path = Path("data/output") / output_filename
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -125,12 +179,20 @@ def process_video(source: str | int, camera_id: str = "cam-01",
 
         source_arg = int(source) if str(source).isdigit() else source
         
+        # Limit to 300 frames and resize uploaded video to 640x360
+        if not max_frames:
+            max_frames = 300
+            
+        if isinstance(source_arg, str) and Path(source_arg).exists():
+            source_arg = check_and_resize_video(source_arg, target_width=640, target_height=360, max_frames=max_frames)
+
         # Log starting parameters
         print(f"[lite] Input video path: {source_arg}")
         print(f"[lite] Output video path: {output_path}")
 
         fps = 30.0
-        frame_size = None
+        frame_size = (640, 360)
+        total_frames = 0
         if isinstance(source_arg, str) and Path(source_arg).exists():
             cap = cv2.VideoCapture(source_arg)
             if cap.isOpened():
@@ -139,45 +201,58 @@ def process_video(source: str | int, camera_id: str = "cam-01",
                     fps = fps_val
                 w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                 h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                if w > 0 and h > 0:
-                    frame_size = (w, h)
+                frame_size = (w, h)
                 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                if max_frames and total_frames > max_frames:
-                    total_frames = max_frames
-                _run_progress["total_frames"] = total_frames
             cap.release()
 
-        from ultralytics import YOLO
-        print(f"[lite] loading {s.yolo_model} (CPU) ...")
-        model = YOLO(s.yolo_model)
+        # Since we sample every 5th frame, the output video frame rate is divided by 5
+        output_fps = fps / 5.0
+        sampled_total_frames = (total_frames + 4) // 5
+        _run_progress["total_frames"] = sampled_total_frames
 
-        results = model.track(
-            source=source_arg, classes=[s.person_class_id], conf=s.detect_conf,
-            tracker="bytetrack.yaml", persist=True, stream=True, verbose=False,
-        )
+        from ultralytics import YOLO
+        print("[lite] Demo Mode: forcing YOLOv8n only (CPU) ...")
+        model = YOLO("yolov8n.pt")
 
         from collections import defaultdict
         track_history = defaultdict(list)
 
+        cap = cv2.VideoCapture(source_arg)
+        if not cap.isOpened():
+            raise ValueError(f"Could not open source video: {source_arg}")
+
         writer = None
+        f_idx = 0
         frame_idx = 0
         last_tick = time.time()
         written = 0
         print(f"[lite] writing -> {output_path} and SQLite (data/store.db)")
 
         with open(JSONL_PATH, "a", encoding="utf-8") as jsonl:
-            for res in results:
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                f_idx += 1
+                
+                # Check if this frame should be processed (every 5th frame: 1, 6, 11, 16...)
+                if f_idx % 5 != 1:
+                    continue
+                
+                actual_frame_idx = f_idx
                 frame_idx += 1
                 _run_progress["processed_frames"] = frame_idx
-                frame = res.orig_img.copy() if hasattr(res, 'orig_img') else None
-                if frame is None:
-                    continue
+                
+                # Run YOLO tracking on this single frame
+                results = model.track(
+                    source=frame, classes=[s.person_class_id], conf=s.detect_conf,
+                    tracker="bytetrack.yaml", persist=True, verbose=False,
+                )
+                res = results[0]
 
                 if writer is None:
                     h, w = frame.shape[:2]
-                    if frame_size is None:
-                        frame_size = (w, h)
-                    writer = cv2.VideoWriter(str(output_path), cv2.VideoWriter_fourcc(*"avc1"), fps, frame_size)
+                    writer = cv2.VideoWriter(str(output_path), cv2.VideoWriter_fourcc(*"avc1"), output_fps, (w, h))
 
                 if res.boxes is not None and res.boxes.id is not None:
                     ids = res.boxes.id.int().tolist()
@@ -224,19 +299,18 @@ def process_video(source: str | int, camera_id: str = "cam-01",
 
                 writer.write(frame)
 
-                for ev in gen.process_frame(frame_idx, dets, ts):
+                for ev in gen.process_frame(actual_frame_idx, dets, ts):
                     written += persist(store, anomaly, jsonl, ev)
 
                 if time.time() - last_tick >= 1.0:
-                    for ev in gen.occupancy_snapshot(frame_idx, ts):
+                    for ev in gen.occupancy_snapshot(actual_frame_idx, ts):
                         written += persist(store, anomaly, jsonl, ev)
                     last_tick = time.time()
                     jsonl.flush()
-                    print(f"[lite] frame={frame_idx} active={len(gen.tracks)} written={written}",
+                    print(f"[lite] frame={actual_frame_idx} active={len(gen.tracks)} written={written}",
                           end="\r")
-
-                if max_frames and frame_idx >= max_frames:
-                    break
+                time.sleep(0.01)
+            cap.release()
 
         if writer is not None:
             writer.release()

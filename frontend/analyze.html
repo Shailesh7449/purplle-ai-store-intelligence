@@ -26,6 +26,20 @@
     .sidebar { width: 260px; height: 100vh; background: linear-gradient(180deg, #ffffff, #faf5ff); position: fixed; left: 0; top: 0; padding: 30px 24px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.05); border-right: 1px solid rgba(168, 85, 247, 0.08); display: flex; flex-direction: column; z-index: 100; }
     .logo { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 45px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
     .logo span { background: linear-gradient(135deg, var(--pink), var(--purple)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .demo-badge {
+      font-size: 10px;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      color: white;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      margin-left: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+      vertical-align: middle;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
     .sidebar a { display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-decoration: none; color: var(--muted); border-radius: 12px; margin-bottom: 8px; font-weight: 550; font-size: 14px; transition: var(--transition); }
     .sidebar a:hover { background: #faf5ff; color: var(--purple); }
     .sidebar a.active { background: #f3e8ff; color: var(--purple); box-shadow: var(--shadow-sm); }
@@ -162,6 +176,119 @@
       100% { transform: rotate(360deg); }
     }
 
+    /* Mobile Header & Overlay Styles */
+    .mobile-header {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: white;
+      border-bottom: 1px solid rgba(168, 85, 247, 0.08);
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 999;
+    }
+    .hamburger-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--purple);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      transition: var(--transition);
+    }
+    .hamburger-btn:active {
+      background: #f3e8ff;
+    }
+    .mobile-logo {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.3);
+      backdrop-filter: blur(4px);
+      z-index: 998;
+      opacity: 1; /* Keep opacity at 1 when display block is toggled to avoid transition conflict */
+      pointer-events: none;
+    }
+    .sidebar-overlay.active {
+      display: block !important;
+      pointer-events: auto !important;
+    }
+
+    /* Notification Banner */
+    .notification-banner {
+      display: none;
+      padding: 14px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 14.5px;
+      align-items: center;
+      gap: 10px;
+      animation: slideDown 0.3s ease;
+    }
+    .notification-banner.success {
+      display: flex;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #16a34a;
+    }
+    .notification-banner.error {
+      display: flex;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Empty State Card */
+    .empty-state-card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 60px 40px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      border: 1px dashed rgba(168, 85, 247, 0.25);
+      margin-top: 20px;
+      transition: var(--transition);
+    }
+    .empty-state-icon {
+      font-size: 50px;
+      margin-bottom: 15px;
+    }
+    .empty-state-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .empty-state-card p {
+      color: var(--muted);
+      font-size: 14.5px;
+      max-width: 450px;
+      margin: 0 auto;
+    }
+
     @media (max-width: 1120px) { .layout-grid { grid-template-columns: 1fr; } }
     @media (max-width: 900px) {
       .sidebar { width: 80px; padding: 20px 10px; }
@@ -169,11 +296,107 @@
       .sidebar a { justify-content: center; padding: 14px 0; }
       .main { margin-left: 80px; width: calc(100% - 80px); padding: 30px 24px; }
     }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .mobile-header {
+        display: flex;
+      }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 260px;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar .logo span, .sidebar a span {
+        display: inline !important;
+      }
+      .sidebar a {
+        justify-content: flex-start !important;
+        padding: 14px 16px !important;
+      }
+      .main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 20px 16px !important;
+      }
+      .hero {
+        padding: 24px !important;
+        border-radius: 16px !important;
+        margin-bottom: 20px !important;
+      }
+      .hero h1 {
+        font-size: 28px !important;
+      }
+      .hero p {
+        font-size: 14px !important;
+      }
+      .card, .panel {
+        padding: 18px !important;
+        border-radius: 16px !important;
+      }
+      .layout-grid, .grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+      }
+      .kpis {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      .analytics-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #upload-controls > div {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 15px !important;
+      }
+      #upload-controls button, #upload-controls span {
+        width: 100% !important;
+        text-align: center !important;
+      }
+      #processing-steps {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+      #video-action-buttons {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+      .empty-state-card {
+        padding: 40px 20px !important;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Mobile Header -->
+  <div class="mobile-header">
+    <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+    <div class="mobile-logo">💜 Purplle AI <span class="demo-badge">Demo Mode</span></div>
+    <div style="width: 24px;"></div>
+  </div>
+
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
   <div class="sidebar">
-    <div class="logo">💜 <span>Purplle AI</span></div>
+    <div class="logo">💜 <span>Purplle AI</span><span class="demo-badge">Demo Mode</span></div>
     <a href="/dashboard">📹 <span>Store Activity</span></a>
     <a href="/analyze" class="active">🎥 <span>Analyze Video</span></a>
     <a href="/journey">👥 <span>Person Journey</span></a>
@@ -241,6 +464,16 @@
       </div>
     </div>
 
+    <!-- Notification Banner -->
+    <div id="notification-banner" class="notification-banner"></div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="empty-state-card">
+      <div class="empty-state-icon">🎥</div>
+      <h3>No Active CCTV Analysis</h3>
+      <p>Select a CCTV video file and click "Analyze Video" to generate real-time passenger journeys, active tracking streams, and deep store analytics.</p>
+    </div>
+
     <!-- Main Content Layout (Hidden by default until video is processed or existing runs exist) -->
     <div class="layout-grid" id="analysis-content" style="display: none;">
       <div class="panel">
@@ -293,6 +526,21 @@
   </div>
 
   <script>
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('active');
+    }
+
+    function showNotification(message, isError = false) {
+      const banner = document.getElementById('notification-banner');
+      banner.textContent = message;
+      banner.className = 'notification-banner ' + (isError ? 'error' : 'success');
+      banner.style.display = 'flex';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 5000);
+    }
+
     const fileInput = document.getElementById('fileInput');
     const analyzeBtn = document.getElementById('analyzeBtn');
     const resetBtn = document.getElementById('resetBtn');
@@ -346,6 +594,7 @@
       analyzeBtn.setAttribute('disabled', 'true');
       resetBtn.style.display = "none";
       document.getElementById("analysis-content").style.display = "none";
+      document.getElementById("empty-state").style.display = "block";
       if (metricsInterval) {
         clearInterval(metricsInterval);
       }
@@ -470,6 +719,7 @@
 
         document.getElementById("processing-status").style.display = "none";
         document.getElementById("analysis-content").style.display = "grid";
+        document.getElementById("empty-state").style.display = "none";
         resetBtn.style.display = "inline-block";
         if (actionBtns) actionBtns.style.display = "flex";
         
@@ -488,10 +738,13 @@
           loadLiveEvents();
         }, 3000);
 
+        showNotification("CCTV video analysis successfully completed!");
+
       } catch (err) {
         console.error("Error running tracking simulation:", err);
-        alert("An error occurred during video analysis. Make sure the server is online.");
+        showNotification("An error occurred during video analysis. Make sure the server is online.", true);
         document.getElementById("processing-status").style.display = "none";
+        document.getElementById("empty-state").style.display = "block";
       }
     }
 
@@ -622,6 +875,7 @@
         const summary = await getJSON("/api/metrics/summary");
         if (summary && summary.unique_visitors > 0) {
           document.getElementById("analysis-content").style.display = "grid";
+          document.getElementById("empty-state").style.display = "none";
           document.getElementById("resetBtn").style.display = "inline-block";
           
           const actionBtns = document.getElementById("video-action-buttons");
@@ -638,13 +892,16 @@
             loadAnalyzeMetrics();
             loadLiveEvents();
           }, 3000);
+        } else {
+          document.getElementById("empty-state").style.display = "block";
         }
       } catch (e) {
         console.log("No existing runs found or server offline:", e);
+        document.getElementById("empty-state").style.display = "block";
       }
     }
 
-    // Removed initial checkExistingData() call so the page starts clean without displaying previous run results.
+    checkExistingData();
 
     async function loadTestVideo() {
       try {
